@@ -23,7 +23,6 @@ public:
     enum class state_e {
         NOT_INITIALIZED,
         INITIALIZED,
-        WAITING_FOR_CREDENTIALS,
         READY_TO_CONNECT,
         CONNECTING,
         WAITING_FOR_IP,
@@ -42,7 +41,7 @@ public:
     esp_err_t init(void); // Set up wifi
     esp_err_t begin(void); // Start WiFi, connect WiFi... etc.
 
-    state_e get_state(void);
+    constexpr const state_e& get_state(void) {return _state;}
 
     constexpr static const char* get_mac(void) { return mac_address_cstr; }
 
@@ -55,12 +54,22 @@ private:
 
     void state_machine(void);
 
+    static void event_handler(void* arg, esp_event_base_t event_base,
+                                    int32_t event_id, void* event_data);
+    static void wifi_event_handler(void* arg, esp_event_base_t event_base,
+                                    int32_t event_id, void* event_data);
+    static void ip_event_handler(void* arg, esp_event_base_t event_base,
+                                    int32_t event_id, void* event_data);
+    static state_e _state;
+
     static esp_err_t _get_mac(void);
 
 // VARIABLES
-    static state_e      _state;
     static char         mac_address_cstr[13];
+
     static std::mutex   init_mutex;
+    static std::mutex   connect_mutex;
+    static std::mutex  state_mutex;
 
 }; // class Wifi
 

@@ -1,10 +1,13 @@
 
 #include "Wifi.h"
-
+//RNte^NW4&#9YU2
 namespace WIFI {
 
 char                Wifi::mac_address_cstr[]{};
 std::mutex          Wifi::init_mutex{};
+std::mutex          Wifi::connect_mutex{};
+std::mutex          Wifi::state_mutex{};
+
 Wifi::state_e       Wifi::_state{Wifi::state_e::NOT_INITIALIZED};
 wifi_init_config_t  Wifi::wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
 wifi_config_t       Wifi::wifi_config{};
@@ -20,12 +23,96 @@ Wifi::Wifi(void) {
     
 } // constructor Wifi
 
+
+
+void Wifi::event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+
+    if(WIFI_EVENT == event_base) {
+        return wifi_event_handler(arg, event_base, event_id, event_data);
+    } 
+    else if (IP_EVENT == event_base) {
+        return ip_event_handler(arg, event_base, event_id, event_data);
+    } 
+    else {
+        ESP_LOGE("myWIFI", "Unhandled event_base %s", event_base);
+    }
+}
+
+void Wifi::wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    if(WIFI_EVENT == event_base) {
+        const wifi_event_t event_type{static_cast<wifi_event_t>(event_id)};
+        switch(event_type) {
+        case WIFI_EVENT_STA_START: {
+            std::lock_guard<std::mutex> guard(state_mutex); 
+            _state = state_e::READY_TO_CONNECT;
+            break;
+        }
+        case WIFI_EVENT_STA_CONNECTED: {
+            std::lock_guard<std::mutex> guard(state_mutex); 
+            _state = state_e::WAITING_FOR_IP;
+            break;
+        }
+        default:
+            // stop and disco... etc.
+            break;
+        }
+    }
+}
+
+void Wifi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    if(IP_EVENT == event_base) {
+        std::lock_guard<std::mutex> guard(state_mutex);
+        const ip_event_t event_type{static_cast<ip_event_t>(event_id)};
+        switch(event_type) {
+        case IP_EVENT_STA_GOT_IP:
+            _state = state_e::CONNECTED;
+            break;
+        case IP_EVENT_STA_LOST_IP:
+            _state = state_e::WAITING_FOR_IP;
+            break;
+        default:
+            // TODO: IP6.
+            break;
+        }
+    }
+}
+
+esp_err_t Wifi::init(void) {
+    return _init();
+}
+
+esp_err_t Wifi::begin(void) {
+    std::lock_guard<std::mutex> connect_guard(connect_mutex);
+    esp_err_t status{ESP_OK};
+    
+    std::lock_guard<std::mutex> state_guard(state_mutex);
+    switch(_state) {
+    case state_e::READY_TO_CONNECT:
+        status = esp_wifi_connect();
+        
+        if (ESP_OK == status) 
+            _state = state_e::CONNECTING;
+        break;
+    case state_e::CONNECTING:
+    case state_e::WAITING_FOR_IP:
+    case state_e::CONNECTED:
+        break;
+    case state_e::NOT_INITIALIZED:
+    case state_e::INITIALIZED:
+    case state_e::DISCONNECTED:
+    case state_e::ERROR:
+        status = ESP_FAIL;
+        break;
+    }
+    return status;
+}
+
 esp_err_t Wifi::_init(void) {
 
-    std::lock_guard<std::mutex> guard(init_mutex);
+    std::lock_guard<std::mutex> init_guard(init_mutex);
 
     esp_err_t status{ESP_OK};
-
+    std::lock_guard<std::mutex> state_guard(state_mutex);
     if (state_e::NOT_INITIALIZED == _state) {
         status = esp_netif_init(); // Initialize the underlying TCP/IP stack 
 
@@ -36,6 +123,12 @@ esp_err_t Wifi::_init(void) {
         }
         if (ESP_OK == status) {
             status = esp_wifi_init(&wifi_init_config);
+        }
+        if (ESP_OK == status) {
+            status = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, nullptr, nullptr);
+        }
+        if (ESP_OK == status) {
+            status = esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &event_handler, nullptr, nullptr);
         }
         if (ESP_OK == status) {
             status = esp_wifi_set_mode(WIFI_MODE_STA); // keep track of mode?
@@ -58,13 +151,15 @@ esp_err_t Wifi::_init(void) {
 
             status = esp_wifi_set_config(WIFI_IF_STA, &wifi_config); // keep track of mode?
         }
-
-
+        if (ESP_OK == status) {
+            status = esp_wifi_start();
+        }
+        if (ESP_OK == status) {
+            _state = state_e::INITIALIZED;
+        }
     } else if (state_e::ERROR == _state) {
-        status = ESP_FAIL;
+        _state = state_e::NOT_INITIALIZED;
     }
-
-
     return status;
 } // Wifi::init
 
