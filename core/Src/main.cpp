@@ -24,6 +24,10 @@ esp_err_t Main::setup(void) {
     esp_err_t status{ESP_OK};
     ESP_LOGI(LOG_TAG, "SETUP!");
     status |= led.init();
+    status |= wifi.init();
+
+    if (ESP_OK == status) status |= wifi.begin();
+
     return status;
 }
 
@@ -31,13 +35,13 @@ esp_err_t Main::setup(void) {
 void Main::loop(void) {
 
 
-    ESP_LOGI(LOG_TAG, "Hello world!");
+    //ESP_LOGI(LOG_TAG, "Hello world!");
     
     led.set(true);
-    ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
+    // ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     led.set(false);    
-    ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
+    // ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 }

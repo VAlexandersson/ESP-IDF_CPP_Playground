@@ -14,11 +14,14 @@
 
 #include <cstring>
 
+#include "config.h" // SSID and PASSWORD
+
 namespace WIFI {
 
 class Wifi {
-    constexpr static const char* ssid{"WifiSSID"};
-    constexpr static const char* password{"WifiPassword"};
+    constexpr static const char* _log_tag{"WiFi"};
+    //constexpr static const char* SSID{"WifiSSID"};
+    //constexpr static const char* PASSWORD{"WifiPassword"};
 public:
     enum class state_e {
         NOT_INITIALIZED,
@@ -46,8 +49,6 @@ public:
     constexpr static const char* get_mac(void) { return mac_address_cstr; }
 
 private:
-// FUNCTIONS
-
     static esp_err_t _init(void);
     static wifi_init_config_t wifi_init_config;
     static wifi_config_t wifi_config;
@@ -63,8 +64,6 @@ private:
     static state_e _state;
 
     static esp_err_t _get_mac(void);
-
-// VARIABLES
     static char         mac_address_cstr[13];
 
     static std::mutex   init_mutex;

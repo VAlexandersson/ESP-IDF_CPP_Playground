@@ -7,6 +7,7 @@
 #include "nvs_flash.h"
 
 #include "Gpio.h"
+#include "Wifi.h"
 
  
 class Main final {
@@ -15,4 +16,5 @@ public:
     void loop(void);
 
     Gpio::GpioOutput led{GPIO_NUM_2, false};
+    WIFI::Wifi wifi;
 };
