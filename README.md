@@ -1,3 +1,4 @@
 # RC CAR using ESP_IDF
 
-The start of a restruct of an RTOS RC car that was built with Arduino and FreeRTOS framework.
+This is supposed to be a upgrade or an complete restruct of this project of an [Arduino based RC "Car"](https://github.com/VAlexandersson/FreeRTOS_RC_CAR) but it starting to lean on becoming some whole different. 
+
