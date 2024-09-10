@@ -44,7 +44,7 @@ public:
     esp_err_t init(void); // Set up wifi
     esp_err_t begin(void); // Start WiFi, connect WiFi... etc.
 
-    constexpr const state_e& get_state(void) {return _state;}
+    constexpr static const state_e& get_state(void) {return _state;}
 
     constexpr static const char* get_mac(void) { return mac_address_cstr; }
 

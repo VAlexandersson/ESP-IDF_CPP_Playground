@@ -7,7 +7,7 @@ static Main my_main;
 
 extern "C" void app_main(void) {
 
-    ESP_LOGI(LOG_TAG, "Creating defaiult event loop");    
+    ESP_LOGI(LOG_TAG, "Creating default event loop");    
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     ESP_LOGI(LOG_TAG, "Initializing NVS");    
@@ -28,6 +28,8 @@ esp_err_t Main::setup(void) {
 
     if (ESP_OK == status) status |= wifi.begin();
 
+    status |= sntp.init();
+
     return status;
 }
 
@@ -38,10 +40,10 @@ void Main::loop(void) {
     //ESP_LOGI(LOG_TAG, "Hello world!");
     
     led.set(true);
-    // ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
+    ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     led.set(false);    
-    // ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
+    ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 }

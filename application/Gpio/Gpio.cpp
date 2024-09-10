@@ -29,7 +29,4 @@ esp_err_t GpioOutput::set(const bool state) {
     return gpio_set_level(_pin, _inverted_logic ^ _state); // XOR with inverted logic
 }
 
-
-
-
 } // namespace Gpio
