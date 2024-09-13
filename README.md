@@ -1,9 +1,17 @@
-# RC CAR using ESP_IDF
+# ESP_IDF Playground
 
-This is supposed to be a upgrade or an complete restruct of this project of an [Arduino based RC "Car"](https://github.com/VAlexandersson/FreeRTOS_RC_CAR) but it's starting to lean towards becoming something different. 
+This was supposed to be a upgrade or actually, a complete restruct of this project: [Arduino based IRC "Car"](https://github.com/VAlexandersson/FreeRTOS_RC_CAR). However, ESP-IDF's many features made it instead into a playground to experiment with its many features, that hopefully, will end up has a reusable component library.
+
+Current implemented modules:
+- DO-GPIO 
+- WiFi
+- SNTP
+- NVS
 
 
-Initializing Wifi and getting time from a SNTP server:
+
+
+Initializing Wifi and getting time from a SNTP server while flipping GPIO LED.
 ```
 I (00:00:02.632) WiFi: event_handler:35 IP_EVENT received
 I (00:00:02.636) WiFi: ip_event_handler:77 Event ID 0
@@ -16,10 +24,3 @@ I (15:13:24.285) Sntp: Time is Tue Sep 10 15:13:24 2024
 I (15:13:24.818) MAIN: LED state: 0
 I (15:13:25.818) MAIN: LED state: 1
 ````
-
-
-
-TODO:
-- WIFI MODULE 
-- BLUETHOOTH MODULE 
-- GENERIC GPIO INTERFACE
