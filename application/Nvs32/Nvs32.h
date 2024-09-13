@@ -35,12 +35,12 @@ public:
     template<typename T>
     [[nodiscard]] esp_err_t verify_buffer(const char* const key, const T input, const size_t len);
 
-protected:
+private:
     [[nodiscard]] static esp_err_t _open(const char* const partition_name, nvs_handle_t& handle)
         { return nvs_open(partition_name, NVS_READWRITE, &handle); }
 
     template<typename T>
-    [[nodiscard]] static esp_err_t get(nvs_handle_t handle, const char* const key, T& output) {
+    [[nodiscard]] static esp_err_t _get(nvs_handle_t handle, const char* const key, T& output) {
         size_t n_bytes{sizeof(T)};
 
         if (nullptr == key || 0 == strlen(key))
@@ -51,15 +51,48 @@ protected:
     }
 
     template<typename T>
-    [[nodiscard]] static esp_err_t set(nvs_handle_t handle, const char* const key, T& output) {
+    [[nodiscard]] static esp_err_t _set(nvs_handle_t handle, const char* const key, T& output) {
         size_t n_bytes{sizeof(T)};
 
         if (nullptr == key || 0 == strlen(key))
             return ESP_ERR_INVALID_ARG;
-        else
-            return _get_buffer(handle, key, &output, n_bytes);
+        else {
+            esp_err_t status{_set_buffer(handle, key, &output, n_bytes)};
+
+            if (ESP_OK == status) status |= nvs_commit(handle);
+            if (ESP_OK == status) status |= _verify(handle, key, &output, n_bytes);
+
+            return status;
+        }
 
     }
+
+    template<typename T>
+    [[nodiscard]]static esp_err_t _verify(nvs_handle_t handle, const char* const key, T& input) {
+
+        T val_in_nvs{};
+        esp_err_t status = _get(handle, key, val_in_nvs);
+
+        if (ESP_OK == status) {
+            if(input == val_in_nvs)
+                return ESP_OK;
+            else
+                return ESP_FAIL;    
+        }
+        else
+            return status;
+    }
+
+    template<typename T>
+    [[nodiscard]] static esp_err_t _get_buf(nvs_handle_t handle, const char* const key, T* output, const size_t len) {
+        size_t n_bytes{sizeof(T) * len};
+
+        if (nullptr == key || 0 == strlen(key) || nullptr == output || 0 == len)
+            return ESP_ERR_INVALID_ARG;
+        else
+            return nvs_get_blob(handle, key, static_cast<void*>(output), &n_bytes);
+    }
+
 };
 
 } // namespace NVS
