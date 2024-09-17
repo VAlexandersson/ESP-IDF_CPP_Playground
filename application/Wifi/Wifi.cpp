@@ -11,6 +11,8 @@ Wifi::state_e       Wifi::_state{Wifi::state_e::NOT_INITIALIZED};
 wifi_init_config_t  Wifi::wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
 wifi_config_t       Wifi::wifi_config{};
 
+NVS::Nvs            Wifi::nvs{};
+
 Wifi::Wifi(void) {
 
 

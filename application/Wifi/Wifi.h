@@ -16,6 +16,8 @@
 
 #include "config.h" // SSID and PASSWORD
 
+#include "../Nvs32/Nvs32.h"
+
 namespace WIFI {
 
 class Wifi {
@@ -69,6 +71,9 @@ private:
     static std::mutex   init_mutex;
     static std::mutex   connect_mutex;
     static std::mutex  state_mutex;
+
+
+    static NVS::Nvs nvs;
 
 }; // class Wifi
 
