@@ -3,6 +3,8 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 #include "esp_log.h"
 
+
+
 namespace SNTP {
 
 std::chrono::_V2::system_clock::time_point Sntp::last_update{};

@@ -101,6 +101,11 @@ esp_err_t Main::setup(void) {
 
     if (ESP_OK == status) status |= wifi.begin();
 
+    while (WIFI::Wifi::get_state() != WIFI::Wifi::state_e::CONNECTED) {
+        ESP_LOGI(LOG_TAG, "Waiting for WiFi to connect...");
+        vTaskDelay(pdSECOND); 
+    }
+
     status |= sntp.init();
 
     return status;
