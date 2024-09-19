@@ -11,11 +11,7 @@ Wifi::state_e       Wifi::_state{Wifi::state_e::NOT_INITIALIZED};
 wifi_init_config_t  Wifi::wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
 wifi_config_t       Wifi::wifi_config{};
 
-NVS::Nvs            Wifi::nvs{};
-
 Wifi::Wifi(void) {
-
-
     std::lock_guard<std::mutex> guard(init_mutex);
 
     if(!get_mac()[0]) { 
@@ -24,8 +20,6 @@ Wifi::Wifi(void) {
     }
     
 } // constructor Wifi
-
-
 
 void Wifi::event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
 
@@ -94,15 +88,10 @@ void Wifi::ip_event_handler(void* arg, esp_event_base_t event_base, int32_t even
             break;
         }
         default:
-            // TODO: IP6.
             ESP_LOGW(_log_tag, "%s:%d Default switch case (%ld)", __func__, __LINE__, event_id);
             break;
         }
     }
-}
-
-esp_err_t Wifi::init(void) {
-    return _init();
 }
 
 esp_err_t Wifi::begin(void) {
@@ -117,9 +106,10 @@ esp_err_t Wifi::begin(void) {
         ESP_LOGI(_log_tag, "%s:%d Calling esp_wifi_connect", __func__, __LINE__);
         status = esp_wifi_connect();
         ESP_LOGI(_log_tag, "%s:%d esp_wifi_connect:%s", __func__, __LINE__, esp_err_to_name(status));
-        
-        if (ESP_OK == status) 
+            
+        if (ESP_OK == status) {
             _state = state_e::CONNECTING;
+        }
         break;
     case state_e::CONNECTING:
     case state_e::WAITING_FOR_IP:
@@ -134,16 +124,18 @@ esp_err_t Wifi::begin(void) {
         break;
     }
     return status;
-}
+} // Wifi::begin
 
-esp_err_t Wifi::_init(void) {
 
+esp_err_t Wifi::init(const char* const ssid, const char* const password) {
+  
     ESP_LOGI(_log_tag, "%s:%d Waiting for init_mutex", __func__, __LINE__);
     std::lock_guard<std::mutex> init_guard(init_mutex);
 
     esp_err_t status{ESP_OK};
     ESP_LOGI(_log_tag, "%s:%d Waiting for state_mutex", __func__, __LINE__);
     std::lock_guard<std::mutex> state_guard(state_mutex);
+
     if (state_e::NOT_INITIALIZED == _state) {
 
         ESP_LOGI(_log_tag, "%s:%d Calling esp_netif_init", __func__, __LINE__);
@@ -157,40 +149,39 @@ esp_err_t Wifi::_init(void) {
 
             if (!p_netif) status = ESP_FAIL;
         }
+
         if (ESP_OK == status) {
             ESP_LOGI(_log_tag, "%s:%d Calling esp_wifi_init", __func__, __LINE__);
             status = esp_wifi_init(&wifi_init_config);
-            ESP_LOGI(_log_tag, "%s:%d esp_wifi_init:%s", __func__, __LINE__,
-                                                        esp_err_to_name(status));
+            ESP_LOGI(_log_tag, "%s:%d esp_wifi_init:%s", __func__, __LINE__, esp_err_to_name(status));
         }
+
         if (ESP_OK == status) {
             ESP_LOGI(_log_tag, "%s:%d Calling esp_event_handler_instance_register", __func__, __LINE__);
-            status = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, nullptr, nullptr);
+            status = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, nullptr, nullptr);
             ESP_LOGI(_log_tag, "%s:%d esp_event_handler_instance_register:%s", __func__, __LINE__, esp_err_to_name(status));
         }
+
         if (ESP_OK == status) {
             ESP_LOGI(_log_tag, "%s:%d Calling esp_event_handler_instance_register", __func__, __LINE__);
-            status = esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &event_handler, nullptr, nullptr);
-            ESP_LOGI(_log_tag, "%s:%d esp_event_handler_instance_register:%s", __func__, __LINE__,
-                                                        esp_err_to_name(status));
+            status = esp_event_handler_instance_register(IP_EVENT, ESP_EVENT_ANY_ID, &ip_event_handler, nullptr, nullptr);
+            ESP_LOGI(_log_tag, "%s:%d esp_event_handler_instance_register:%s", __func__, __LINE__, esp_err_to_name(status));
         }
+
+
         if (ESP_OK == status) {
             ESP_LOGI(_log_tag, "%s:%d Calling esp_wifi_set_mode", __func__, __LINE__);
             status = esp_wifi_set_mode(WIFI_MODE_STA); // keep track of mode?
-            ESP_LOGI(_log_tag, "%s:%d esp_wifi_set_mode:%s", __func__, __LINE__,
-                                                        esp_err_to_name(status));
+            ESP_LOGI(_log_tag, "%s:%d esp_wifi_set_mode:%s", __func__, __LINE__, esp_err_to_name(status));
         }
         if (ESP_OK == status) {
-            
             const size_t ssid_len_to_copy = 
-                std::min( strlen(SSID), static_cast<size_t>(sizeof(wifi_config.sta.ssid)) );
-
-            memcpy(wifi_config.sta.ssid, SSID, ssid_len_to_copy);
+                std::min(strlen(ssid), static_cast<size_t>(sizeof(wifi_config.sta.ssid)));
+            memcpy(wifi_config.sta.ssid, ssid, ssid_len_to_copy);
 
             const size_t password_len_to_copy = 
-                std::min( strlen(PASSWORD), static_cast<size_t>(sizeof(wifi_config.sta.password)) );
-
-            memcpy(wifi_config.sta.password, PASSWORD, password_len_to_copy);
+                std::min(strlen(password), static_cast<size_t>(sizeof(wifi_config.sta.password)));
+            memcpy(wifi_config.sta.password, password, password_len_to_copy);
 
             wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
             wifi_config.sta.pmf_cfg.capable = true;
@@ -214,7 +205,8 @@ esp_err_t Wifi::_init(void) {
         _state = state_e::NOT_INITIALIZED;
     }
     return status;
-} // Wifi::init
+} // Wifi::init  
+
 
 esp_err_t Wifi::_get_mac(void) {
 
@@ -232,4 +224,4 @@ esp_err_t Wifi::_get_mac(void) {
 
 } // Wifi::_get_mac
 
-} // namespace WIFI
+} // namespace WIFI;

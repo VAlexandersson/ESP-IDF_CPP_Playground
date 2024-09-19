@@ -21,18 +21,21 @@ public:
 
     // Type
     template<typename T>
-    [[nodiscard]] esp_err_t get(const char* const key, T& output)
-      { return _get_buf(handle, key, output, 1); }
+    [[nodiscard]] esp_err_t get(const char* const key, T& output) { 
+      size_t len = 1; 
+      return _get_buf(handle, key, &output, len);
+    }
+
     template<typename T>
     [[nodiscard]] esp_err_t set(const char* const key, const T& input)
-      { return _set_buf(handle, key, input, 1); }
+      { return _set_buf(handle, key, &input, 1); }
     template<typename T>
     [[nodiscard]] esp_err_t verify(const char* const key, const T& input)
-      { return _verify_buf(handle, key, input, 1); }
+      { return _verify(handle, key, &input, 1); }
 
     // Buffer
     template<typename T>
-    [[nodiscard]] esp_err_t get_buffer(const char* const key, T* output, const size_t& len)
+    [[nodiscard]] esp_err_t get_buffer(const char* const key, T* output, size_t& len)
       { return _get_buf(handle, key, output, len); }
 
     template<typename T>
@@ -54,7 +57,7 @@ private:
         if (nullptr == key || 0 == strlen(key))
             return ESP_ERR_INVALID_ARG;
         else
-            return _get_buffer(handle, key, &output, n_bytes);
+            return _get_buf(handle, key, &output, n_bytes);
 
     }
 
@@ -65,10 +68,10 @@ private:
         if (nullptr == key || 0 == strlen(key))
             return ESP_ERR_INVALID_ARG;
         else {
-            esp_err_t status{_set_buffer(handle, key, &output, n_bytes)};
+            esp_err_t status{_set_buf(handle, key, &output, n_bytes)};
 
             if (ESP_OK == status) status |= nvs_commit(handle);
-            if (ESP_OK == status) status |= _verify(handle, key, &output, n_bytes);
+            if (ESP_OK == status) status |= _verify(handle, key, &output);
 
             return status;
         }
@@ -108,14 +111,13 @@ private:
     }
 
     template<typename T>
-    [[nodiscard]] static esp_err_t _set_buf(nvs_handle_t handle, const char* const key, const T* input, size_t& len) {
-      size_t n_bytes{sizeof(T) * len};
+    [[nodiscard]] static esp_err_t _set_buf(nvs_handle_t handle, const char* const key, const T* input, const size_t& len) {
       esp_err_t status{ESP_OK};
 
       if (nullptr == key || 0 == strlen(key) || nullptr == input || 0 == len)
         status =  ESP_ERR_INVALID_ARG;
       else {
-        status = nvs_set_blob(handle, key, input, &n_bytes); // API writes to RAM, not flash
+        status = nvs_set_blob(handle, key, input, (sizeof(T) * len)); // API writes to RAM, not flash
 
         if (ESP_OK == status)
           status = nvs_commit(handle); // Force flush to write to flash so we can verify buffer

@@ -10,6 +10,7 @@
 #include "Gpio.h"
 #include "Wifi.h"
 #include "SntpTime.h"
+#include "../../application/Nvs32/Nvs32.h"
  
 class Main final {
 public:
@@ -18,7 +19,12 @@ public:
     esp_err_t setup(void);
     void loop(void);
 
+    esp_err_t manage_wifi_credentrials();
+
+
     Gpio::GpioOutput led{GPIO_NUM_2, false};
     WIFI::Wifi wifi;
     SNTP::Sntp& sntp;
+
+    static NVS::Nvs nvs;
 };

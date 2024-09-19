@@ -3,7 +3,10 @@
 #include "esp_log.h"
 #define LOG_TAG "MAIN"
 
+#include "config.h" // SSID and PASSWORD
+
 static Main my_main;
+NVS::Nvs Main::nvs{};
 
 extern "C" void app_main(void) {
 
@@ -20,11 +23,81 @@ extern "C" void app_main(void) {
     }
 }
 
+constexpr size_t SSID_LEN = 32;
+constexpr size_t PASSWORD_LEN = 64;
+
+esp_err_t Main::manage_wifi_credentrials() {
+    char ssid[SSID_LEN]{};
+    char password[PASSWORD_LEN]{};
+    size_t ssid_len = std::min(strlen(SSID), SSID_LEN);
+    size_t password_len = std::min(strlen(PASSWORD), PASSWORD_LEN);
+
+    esp_err_t status{ESP_OK};
+    if (ESP_OK != nvs.get_buffer("wifi_ssid", ssid, ssid_len) ||
+        ESP_OK != nvs.get_buffer("wifi_password", password, password_len)) {
+        ESP_LOGI(LOG_TAG, "WiFi credentials not found in NVS");
+        status = ESP_FAIL;
+    }
+   /*
+    esp_err_t status = nvs.get_buffer("wifi_ssid", ssid, ssid_len);
+    ESP_LOGI(LOG_TAG, "SSID fetched from NVS: %s", status == ESP_OK ? "OK" : "FAIL");
+    if (ESP_OK == status) {
+        status = nvs.get_buffer("wifi_password", password, password_len);
+        ESP_LOGI(LOG_TAG, "PASSWORD fetched from NVS: %s", status == ESP_OK ? "OK" : "FAIL");
+    } 
+   */ 
+
+    // Emulate we get it from provisioning service
+    if (ESP_OK != status) {
+        
+        // We pass the ssid and password variables to the function which will populate them
+        for (size_t i = 0; i < ssid_len; ++i) ssid[i] = SSID[i];
+        for (size_t i = 0; i < password_len; ++i) password[i] = PASSWORD[i];
+        if(memcmp(SSID, ssid, ssid_len) == 0 && memcmp(PASSWORD, password, password_len) == 0) {
+            status = ESP_OK;
+        }
+        else {
+            ESP_LOGI(LOG_TAG, "SSID and PASSWORD are not the same");
+        }
+
+
+        // We got the credentials, now we store them in NVS
+        if (ESP_OK == status){
+
+            if (ESP_OK != nvs.set_buffer("wifi_ssid", ssid, ssid_len) ||
+                ESP_OK != nvs.set_buffer("wifi_password", password, password_len)) {
+                
+                status = ESP_FAIL;
+
+            }
+            ESP_LOGI(LOG_TAG, "Setting new SSID and PASSWORD to NVS: %s", status == ESP_OK ? "OK" : "FAIL");
+        }
+    }
+
+
+    if (ESP_OK == status) {
+        ESP_LOGI(LOG_TAG, "Setting WiFi credentials");
+        status = wifi.init(ssid, password);
+    } 
+    return status;
+}
+
+
 esp_err_t Main::setup(void) {
     esp_err_t status{ESP_OK};
+    
     ESP_LOGI(LOG_TAG, "SETUP!");
+    
+    ESP_LOGI(LOG_TAG, "Initializing NVS");
+    status = nvs.init();
+
+    if (ESP_OK == status) {
+        // Would it make more sense to pass the ssid and password as arguments and init the wifi from here?
+        status = manage_wifi_credentrials();
+        ESP_LOGI(LOG_TAG, "WiFi credentials set: %s", status == ESP_OK ? "OK" : "FAIL");
+    }
+
     status |= led.init();
-    status |= wifi.init();
 
     if (ESP_OK == status) status |= wifi.begin();
 

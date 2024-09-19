@@ -16,14 +16,10 @@
 
 #include "config.h" // SSID and PASSWORD
 
-#include "../Nvs32/Nvs32.h"
-
 namespace WIFI {
 
 class Wifi {
     constexpr static const char* _log_tag{"WiFi"};
-    //constexpr static const char* SSID{"WifiSSID"};
-    //constexpr static const char* PASSWORD{"WifiPassword"};
 public:
     enum class state_e {
         NOT_INITIALIZED,
@@ -43,11 +39,10 @@ public:
     Wifi& operator=(const Wifi&)    = default;
     Wifi& operator=(Wifi&&)         = default;
 
-    esp_err_t init(void); // Set up wifi
+    esp_err_t init(const char* const ssid, const char* const password); // Setup WiFi
     esp_err_t begin(void); // Start WiFi, connect WiFi... etc.
 
     constexpr static const state_e& get_state(void) {return _state;}
-
     constexpr static const char* get_mac(void) { return mac_address_cstr; }
 
 private:
@@ -57,12 +52,10 @@ private:
 
     void state_machine(void);
 
-    static void event_handler(void* arg, esp_event_base_t event_base,
-                                    int32_t event_id, void* event_data);
-    static void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                                    int32_t event_id, void* event_data);
-    static void ip_event_handler(void* arg, esp_event_base_t event_base,
-                                    int32_t event_id, void* event_data);
+    static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+    static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+    static void ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+    static void sc_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
     static state_e _state;
 
     static esp_err_t _get_mac(void);
@@ -71,11 +64,5 @@ private:
     static std::mutex   init_mutex;
     static std::mutex   connect_mutex;
     static std::mutex  state_mutex;
-
-
-    static NVS::Nvs nvs;
-
 }; // class Wifi
-
-
 } // namespace WIFI
