@@ -9,7 +9,7 @@
 
 #include "Gpio.h"
 #include "Wifi.h"
-#include "SntpTime.h"
+#include "Sntp32.h"
 #include "../../application/Nvs32/Nvs32.h"
  
 class Main final {

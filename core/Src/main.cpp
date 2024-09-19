@@ -38,14 +38,6 @@ esp_err_t Main::manage_wifi_credentrials() {
         ESP_LOGI(LOG_TAG, "WiFi credentials not found in NVS");
         status = ESP_FAIL;
     }
-   /*
-    esp_err_t status = nvs.get_buffer("wifi_ssid", ssid, ssid_len);
-    ESP_LOGI(LOG_TAG, "SSID fetched from NVS: %s", status == ESP_OK ? "OK" : "FAIL");
-    if (ESP_OK == status) {
-        status = nvs.get_buffer("wifi_password", password, password_len);
-        ESP_LOGI(LOG_TAG, "PASSWORD fetched from NVS: %s", status == ESP_OK ? "OK" : "FAIL");
-    } 
-   */ 
 
     // Emulate we get it from provisioning service
     if (ESP_OK != status) {

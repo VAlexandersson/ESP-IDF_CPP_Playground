@@ -1,5 +1,5 @@
-set(SOURCES SntpTime.cpp)
+set(SOURCES Sntp32.cpp)
 
 idf_component_register( SRCS ${SOURCES}
                         INCLUDE_DIRS .
-                        REQUIRES esp_event esp_netif lwip freertos )
+                        REQUIRES lwip)
