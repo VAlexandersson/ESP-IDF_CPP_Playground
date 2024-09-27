@@ -6,3 +6,6 @@ sdkconfig.old
 .DS_Store
 .devcontainer/
 /**/config.h
+
+# Misc
+code_crawler.py

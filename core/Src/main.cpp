@@ -1,3 +1,4 @@
+/*
 #include "main.h"
 #define LOG_LEVEL_LOCAL ESP_LOG_VERBOSE
 #include "esp_log.h"
@@ -39,7 +40,7 @@ esp_err_t Main::manage_wifi_credentrials() {
         status = ESP_FAIL;
     }
 
-    // Emulate we get it from provisioning service
+    // Emulate we get it from provisioning service, this code is only temporarly. IGNORE.
     if (ESP_OK != status) {
         
         // We pass the ssid and password variables to the function which will populate them
@@ -116,4 +117,46 @@ void Main::loop(void) {
     led.set(false);    
     ESP_LOGI(LOG_TAG, "LED state: %d", led.state());
     vTaskDelay(1000 / portTICK_PERIOD_MS);
+}
+*/
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#include "esp_event.h"
+#include "nvs_flash.h"
+
+#include "Gpio.h"
+#include "Wifi.h"
+#include "Sntp32.h"
+#include "../../application/Nvs32/Nvs32.h"
+
+#include "ApplicationLogic.h"
+#include "SystemInitializer.h"
+
+#include "esp_log.h"
+#define LOG_LEVEL_LOCAL ESP_LOG_VERBOSE
+#define LOG_TAG "MAIN"
+
+extern "C" void app_main(void) {
+
+    ESP_LOGI(LOG_TAG, "Creating default event loop");
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    ESP_LOGI(LOG_TAG, "Initializing NVS");
+    ESP_ERROR_CHECK(nvs_flash_init());
+
+    NVS::Nvs nvs;
+    WIFI::Wifi wifi;
+    SNTP::Sntp& sntp = SNTP::Sntp::get_instance();
+    Gpio::GpioOutput led{GPIO_NUM_2, false};
+
+    SystemInitializer initializer(nvs, wifi, sntp, led);
+
+    ESP_ERROR_CHECK(initializer.initialize());
+
+    ApplicationLogic appLogic(led);
+
+    while (true) {
+        appLogic.run();
+    }
 }
