@@ -8,8 +8,13 @@ Current implemented modules:
 - SNTP
 - NVS
 
+Add it as a git submodule:
+```
+git submodule add git@github.com:VAlexandersson/ESP-IDF_CPP_Playground.git
+```
 
 
+Don't forget to add it in the CMake as a subdirectory
 
 Initializing Wifi and getting time from a SNTP server while flipping GPIO LED.
 ```
