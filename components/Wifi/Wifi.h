@@ -14,7 +14,6 @@
 
 #include <cstring>
 
-#include "config.h" // SSID and PASSWORD
 
 namespace WIFI {
 
