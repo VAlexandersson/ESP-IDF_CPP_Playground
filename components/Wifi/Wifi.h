@@ -60,8 +60,8 @@ private:
     static esp_err_t _get_mac(void);
     static char         mac_address_cstr[13];
 
-    static std::mutex   init_mutex;
-    static std::mutex   connect_mutex;
+    static std::mutex  init_mutex;
+    static std::mutex  connect_mutex;
     static std::mutex  state_mutex;
 }; // class Wifi
 } // namespace WIFI

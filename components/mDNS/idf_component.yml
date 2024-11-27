@@ -1,0 +1,5 @@
+dependencies:
+  espressif/mdns: "*"
+  # override_path: "."
+  idf:
+    version: ">=4.1.0"
